@@ -1,34 +1,25 @@
-from flask import Flask, render_template, request, jsonify
 import joblib
 import pandas as pd
-import webbrowser
-import threading
+from sklearn.linear_model import LinearRegression
 
-app = Flask(__name__)
+# 1. Ensure X has all 6 features matching your Streamlit app
+# Example structure:
+# X = df[['Area', 'Bedrooms', 'Bathrooms', 'Age', 'Location_Grade', 'Garage_Spaces']]
 
-# Load trained model
-model = joblib.load('house_model.pkl')
+# Dummy training example with 6 features:
+X_train = pd.DataFrame([
+    [1500, 3, 2, 10, 4, 1],
+    [2000, 4, 3, 5, 5, 2],
+    [1200, 2, 1, 15, 3, 1],
+    [2500, 4, 3, 2, 5, 2]
+], columns=['Area', 'Bedrooms', 'Bathrooms', 'Age', 'Location_Grade', 'Garage_Spaces'])
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+y_train = [300000, 450000, 220000, 550000]
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        data = request.get_json()
-        area = float(data.get('area'))
-        input_data = pd.DataFrame([[area]], columns=["Area"])
-        prediction = model.predict(input_data)[0]
-        return jsonify({'prediction': round(float(prediction), 2)})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+# 2. Train the model
+model = LinearRegression()
+model.fit(X_train, y_train)
 
-def open_browser():
-    # Automatically opens the web page in your default browser
-    webbrowser.open_new('http://127.0.0.1:5001/')
-
-if __name__ == '__main__':
-    # Open browser in a separate thread so it doesn't block the server startup
-    threading.Timer(1.2, open_browser).start()
-    app.run(port=5001, debug=False)
+# 3. Export the model trained on 6 features
+joblib.dump(model, 'house_model.pkl')
+print("✅ house_model.pkl retrained and saved with 6 features!")
